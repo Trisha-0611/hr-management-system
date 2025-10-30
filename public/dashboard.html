@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Management Dashboard</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      color: cyan;
+      text-align: center;
+    }
+    .container {
+      margin: 0 auto;
+      width: 90%;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+      background-color: #1e1e1e;
+      color: white;
+    }
+    button {
+      background-color: cyan;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #333;
+    }
+    th {
+      background-color: cyan;
+      color: black;
+    }
+    .late {
+      background-color: rgba(255, 0, 0, 0.3);
+    }
+    .delete-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Add New Employee</h2>
+    <input type="text" id="name" placeholder="Enter name">
+    <input type="number" id="age" placeholder="Enter age">
+    
+    <select id="gender">
+      <option value="">Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <select id="department">
+      <option value="HR">HR</option>
+      <option value="IT">IT</option>
+      <option value="Finance">Finance</option>
+      <option value="Marketing">Marketing</option>
+    </select>
+
+    <input type="date" id="joiningDate">
+    <input type="time" id="punchInTime">
+    <button onclick="addEmployee()">Add Employee</button>
+
+    <h2>Employee Dashboard</h2>
+    <table id="employeeTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Department</th>
+          <th>Joining Date</th>
+          <th>Punch-In Time</th>
+          <th>Late Days</th>
+          <th>Salary (After Deduction)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    let employees = [];
+    let employeeId = 1;
+    const FIXED_SALARY = 50000;
+    const LATE_DEDUCTION = 200;
+    const LATE_LIMIT = "10:00";
+
+    function addEmployee() {
+      const name = document.getElementById("name").value.trim();
+      const age = document.getElementById("age").value;
+      const gender = document.getElementById("gender").value;
+      const department = document.getElementById("department").value;
+      const joiningDate = document.getElementById("joiningDate").value;
+      const punchInTime = document.getElementById("punchInTime").value;
+
+      if (!name || !age || !gender || !joiningDate || !punchInTime) {
+        alert("Please fill all fields!");
+        return;
+      }
+
+      // Check if late
+      const isLate = punchInTime > LATE_LIMIT;
+      let lateDays = isLate ? 1 : 0;
+      const salaryAfterDeduction = FIXED_SALARY - (lateDays * LATE_DEDUCTION);
+
+      const employee = {
+        id: employeeId++,
+        name,
+        age,
+        gender,
+        department,
+        joiningDate,
+        punchInTime,
+        lateDays,
+        salary: salaryAfterDeduction
+      };
+
+      // If same employee already exists, increase late days if late again
+      const existing = employees.find(emp => emp.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        if (isLate) existing.lateDays++;
+        existing.salary = FIXED_SALARY - (existing.lateDays * LATE_DEDUCTION);
+        existing.punchInTime = punchInTime;
+      } else {
+        employees.push(employee);
+      }
+
+      renderTable();
+      clearFields();
+    }
+
+    function renderTable() {
+      const tableBody = document.querySelector("#employeeTable tbody");
+      tableBody.innerHTML = "";
+      employees.forEach(emp => {
+        const row = document.createElement("tr");
+        if (emp.punchInTime > LATE_LIMIT) {
+          row.classList.add("late");
+        }
+
+        row.innerHTML = `
+          <td>${emp.id}</td>
+          <td>${emp.name}</td>
+          <td>${emp.age}</td>
+          <td>${emp.gender}</td>
+          <td>${emp.department}</td>
+          <td>${emp.joiningDate}</td>
+          <td>${emp.punchInTime}</td>
+          <td>${emp.lateDays}</td>
+          <td>₹${emp.salary}</td>
+          <td><button class="delete-btn" onclick="deleteEmployee(${emp.id})">Delete</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function deleteEmployee(id) {
+      employees = employees.filter(emp => emp.id !== id);
+      renderTable();
+    }
+
+    function clearFields() {
+      document.getElementById("name").value = "";
+      document.getElementById("age").value = "";
+      document.getElementById("gender").value = "";
+      document.getElementById("department").value = "HR";
+      document.getElementById("joiningDate").value = "";
+      document.getElementById("punchInTime").value = "";
+    }
+  </script>
+
+</body>
+</html>
